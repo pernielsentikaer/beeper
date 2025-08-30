@@ -8,17 +8,23 @@
   "license": "MIT",
   "commands": [
     {
-      "name": "search-chats",
-      "title": "Search Chats",
-      "description": "",
+      "name": "list-accounts",
+      "title": "List Accounts",
+      "description": "List all connected Beeper accounts",
       "mode": "view"
+    },
+    {
+      "name": "focus-app",
+      "title": "Focus Beeper Desktop",
+      "description": "Bring Beeper Desktop to the foreground",
+      "mode": "no-view"
     }
   ],
   "preferences": [
     {
       "name": "baseUrl",
-      "title": "Beeper Connect Base URL",
-      "description": "The base URL for Beeper Connect API (default: http://localhost:23373)",
+      "title": "Beeper Desktop API Base URL",
+      "description": "The base URL for Beeper Desktop API (default: http://localhost:23373)",
       "type": "textfield",
       "required": false,
       "default": "http://localhost:23373"
