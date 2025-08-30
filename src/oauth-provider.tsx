@@ -11,9 +11,9 @@ const baseUrl = preferences.baseUrl || "http://localhost:23373";
 
 const client = new OAuth.PKCEClient({
   redirectMethod: OAuth.RedirectMethod.Web,
-  providerName: "Beeper Connect",
+  providerName: "Beeper Desktop",
   providerIcon: "extension-icon.png",
-  providerId: "beeper-connect",
+  providerId: "beeper-desktop-api",
   description: "Connect to your local Beeper Desktop app",
 });
 
@@ -24,7 +24,4 @@ export const beeperOAuth = new OAuthService({
   authorizeUrl: `${baseUrl}/oauth/authorize`,
   tokenUrl: `${baseUrl}/oauth/token`,
   personalAccessToken: preferences.personalAccessToken,
-  
-  // Use the default token exchange provided by OAuthService
-  // The service will handle PKCE automatically
 });

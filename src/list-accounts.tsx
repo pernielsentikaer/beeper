@@ -1,46 +1,18 @@
-import { ActionPanel, Detail, List, Action, Icon, showToast, Toast } from "@raycast/api";
-import { getClient } from "./api";
-import { useEffect, useState } from "react";
+import { ActionPanel, Detail, List, Action, Icon } from "@raycast/api";
 import { withAccessToken } from "@raycast/utils";
 import { beeperOAuth } from "./oauth-provider";
-
-interface Account {
-  id: string;
-  name: string;
-  type: string;
-  status?: string;
-  connected?: boolean;
-}
+import { useBeeperClient } from "./hooks/useBeeper";
 
 function ListAccountsCommand() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchAccounts() {
-      try {
-        setIsLoading(true);
-        const client = await getClient();
-        
-        // Fetch accounts using accounts.list
-        const result = await client.accounts.list();
-        
-        // Handle the result - it should be an array of accounts
-        setAccounts(Array.isArray(result) ? result : []);
-      } catch (error) {
-        showToast({
-          style: Toast.Style.Failure,
-          title: "Failed to fetch accounts",
-          message: error instanceof Error ? error.message : "Unknown error",
-        });
-        console.error("Error fetching accounts:", error);
-      } finally {
-        setIsLoading(false);
-      }
+  const { data: response, isLoading, revalidate } = useBeeperClient(
+    async (client) => {
+      const result = await client.accounts.list();
+      console.log("Fetched accounts:", JSON.stringify(result, null, 2));
+      return result;
     }
+  );
 
-    fetchAccounts();
-  }, []);
+  const accounts = response?.accounts || [];
 
   return (
     <List
@@ -49,38 +21,52 @@ function ListAccountsCommand() {
     >
       {accounts.map((account) => (
         <List.Item
-          key={account.id}
-          icon={account.connected ? Icon.CheckCircle : Icon.Circle}
-          title={account.name || "Unnamed Account"}
-          subtitle={account.type}
+          key={account.accountID}
+          icon={Icon.Person}
+          title={account.user?.fullName || account.user?.username || "Unnamed Account"}
+          subtitle={account.network}
           accessories={[
-            { text: account.status || "Unknown" },
-            { icon: account.connected ? Icon.Checkmark : Icon.XMarkCircle }
-          ]}
+            { text: account.user?.email || "" },
+            { icon: account.user?.isSelf ? Icon.Star : undefined }
+          ].filter(Boolean)}
           actions={
             <ActionPanel>
-              <Action.Push 
-                title="Show Details" 
+              <Action.Push
+                title="Show Details"
                 target={
-                  <Detail 
-                    markdown={`# ${account.name}
+                  <Detail
+                    markdown={`# ${account.user?.fullName || account.user?.username || "Account"}
 
-**ID:** ${account.id}
-**Type:** ${account.type}
-**Status:** ${account.status || "Unknown"}
-**Connected:** ${account.connected ? "Yes" : "No"}`} 
+**Account ID:** ${account.accountID}
+**Network:** ${account.network}
+**User ID:** ${account.user?.id || "N/A"}
+**Username:** ${account.user?.username || "N/A"}
+**Email:** ${account.user?.email || "N/A"}
+**Is Self:** ${account.user?.isSelf ? "Yes" : "No"}`}
                   />
-                } 
+                }
               />
               <Action
                 title="Refresh"
                 icon={Icon.ArrowClockwise}
+                shortcut={{ modifiers: ["cmd"], key: "r" }}
+                onAction={() => revalidate()}
+              />
+              <Action
+                title="Focus Beeper Desktop"
+                icon={Icon.Window}
+                shortcut={{ modifiers: ["cmd"], key: "o" }}
                 onAction={async () => {
-                  await fetchAccounts();
-                  showToast({
-                    style: Toast.Style.Success,
-                    title: "Accounts refreshed",
-                  });
+                  try {
+                    const { getClient } = await import("./api");
+                    const client = await getClient();
+                    await client.app.focus();
+                    await import("@raycast/api").then(({ showHUD }) => 
+                      showHUD("Beeper Desktop focused")
+                    );
+                  } catch (error) {
+                    console.error("Failed to focus app:", error);
+                  }
                 }}
               />
             </ActionPanel>
