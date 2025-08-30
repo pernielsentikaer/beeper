@@ -1,24 +1,22 @@
-import { ActionPanel, Detail, List, Action, Icon } from "@raycast/api";
+import { ActionPanel, Detail, List, Action, Icon, showHUD } from "@raycast/api";
 import { withAccessToken } from "@raycast/utils";
-import { beeperOAuth } from "./oauth-provider";
-import { useBeeperClient } from "./hooks/useBeeper";
+import { useBeeperClient, createBeeperOAuth } from "./hooks/useBeeper";
 
 function ListAccountsCommand() {
-  const { data: response, isLoading, revalidate } = useBeeperClient(
-    async (client) => {
-      const result = await client.accounts.list();
-      console.log("Fetched accounts:", JSON.stringify(result, null, 2));
-      return result;
-    }
-  );
+  const {
+    data: _accounts,
+    isLoading,
+    revalidate,
+  } = useBeeperClient(async (client) => {
+    const result = await client.accounts.list();
+    console.log("Fetched accounts:", JSON.stringify(result, null, 2));
+    return result.accounts;
+  });
 
-  const accounts = response?.accounts || [];
+  const accounts = _accounts || [];
 
   return (
-    <List
-      isLoading={isLoading}
-      navigationTitle="Beeper Accounts"
-    >
+    <List isLoading={isLoading} navigationTitle="Beeper Accounts">
       {accounts.map((account) => (
         <List.Item
           key={account.accountID}
@@ -27,7 +25,7 @@ function ListAccountsCommand() {
           subtitle={account.network}
           accessories={[
             { text: account.user?.email || "" },
-            { icon: account.user?.isSelf ? Icon.Star : undefined }
+            { icon: account.user?.isSelf ? Icon.Star : undefined },
           ].filter(Boolean)}
           actions={
             <ActionPanel>
@@ -58,12 +56,10 @@ function ListAccountsCommand() {
                 shortcut={{ modifiers: ["cmd"], key: "o" }}
                 onAction={async () => {
                   try {
-                    const { getClient } = await import("./api");
-                    const client = await getClient();
+                    const { getAuthenticatedClient } = await import("./hooks/useBeeper");
+                    const client = await getAuthenticatedClient();
                     await client.app.focus();
-                    await import("@raycast/api").then(({ showHUD }) => 
-                      showHUD("Beeper Desktop focused")
-                    );
+                    showHUD("Beeper Desktop focused");
                   } catch (error) {
                     console.error("Failed to focus app:", error);
                   }
@@ -84,4 +80,4 @@ function ListAccountsCommand() {
   );
 }
 
-export default withAccessToken(beeperOAuth)(ListAccountsCommand);
+export default withAccessToken(createBeeperOAuth())(ListAccountsCommand);
