@@ -2,45 +2,49 @@ import { ActionPanel, Detail, List, Action, Icon } from "@raycast/api";
 import { withAccessToken } from "@raycast/utils";
 import { useBeeperDesktop, createBeeperOAuth, focusApp } from "./api";
 
-function ListAccountsCommand() {
+function ListChatsCommand() {
   const {
-    data: _accounts,
+    data: chats,
     isLoading,
     revalidate,
   } = useBeeperDesktop(async (client) => {
-    const result = await client.accounts.list();
+    const result = await client.chats.search();
     console.log("Fetched accounts:", JSON.stringify(result, null, 2));
-    return result.accounts;
+    return result.data;
   });
 
-  const accounts = _accounts || [];
-
   return (
-    <List isLoading={isLoading} navigationTitle="Beeper Accounts">
-      {accounts.map((account) => (
+    <List isLoading={isLoading} navigationTitle="Beeper Chats">
+      {(chats || []).map((chat) => (
         <List.Item
-          key={account.accountID}
+          key={chat.chatID}
           icon={Icon.Person}
-          title={account.user?.fullName || account.user?.username || "Unnamed Account"}
-          subtitle={account.network}
+          title={chat.title || "Unnamed Chat"}
+          subtitle={chat.network}
           accessories={[
-            { text: account.user?.email || "" },
-            { icon: account.user?.isSelf ? Icon.Star : undefined },
-          ].filter(Boolean)}
+            ...(chat.unreadCount > 0 ? [{ text: `${chat.unreadCount} unread` }] : []),
+            ...(chat.isPinned ? [{ icon: Icon.Pin }] : []),
+            ...(chat.isMuted ? [{ icon: Icon.SpeakerOff }] : []),
+            ...(chat.isArchived ? [{ icon: Icon.AddPerson }] : []),
+          ]}
           actions={
             <ActionPanel>
               <Action.Push
                 title="Show Details"
                 target={
                   <Detail
-                    markdown={`# ${account.user?.fullName || account.user?.username || "Account"}
+                    markdown={`# ${chat.title || "Chat"}
 
-**Account ID:** ${account.accountID}
-**Network:** ${account.network}
-**User ID:** ${account.user?.id || "N/A"}
-**Username:** ${account.user?.username || "N/A"}
-**Email:** ${account.user?.email || "N/A"}
-**Is Self:** ${account.user?.isSelf ? "Yes" : "No"}`}
+**Chat ID:** ${chat.chatID}
+**Account ID:** ${chat.accountID}
+**Network:** ${chat.network}
+**Type:** ${chat.type}
+**Unread Count:** ${chat.unreadCount}
+**Pinned:** ${chat.isPinned ? "Yes" : "No"}
+**Muted:** ${chat.isMuted ? "Yes" : "No"}
+**Archived:** ${chat.isArchived ? "Yes" : "No"}
+**Last Activity:** ${chat.lastActivity || "N/A"}
+`}
                   />
                 }
               />
@@ -60,10 +64,10 @@ function ListAccountsCommand() {
           }
         />
       ))}
-      {!isLoading && accounts.length === 0 && (
+      {!isLoading && (!chats || chats.length === 0) && (
         <List.EmptyView
           icon={Icon.Person}
-          title="No accounts found"
+          title="No chats found"
           description="Make sure Beeper Desktop is running and you're authenticated"
         />
       )}
@@ -71,4 +75,4 @@ function ListAccountsCommand() {
   );
 }
 
-export default withAccessToken(createBeeperOAuth())(ListAccountsCommand);
+export default withAccessToken(createBeeperOAuth())(ListChatsCommand);

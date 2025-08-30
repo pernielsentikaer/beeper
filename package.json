@@ -28,13 +28,6 @@
       "type": "textfield",
       "required": false,
       "default": "http://localhost:23373"
-    },
-    {
-      "name": "personalAccessToken",
-      "title": "Personal Access Token (Optional)",
-      "description": "If you have a personal access token, you can use it instead of OAuth",
-      "type": "password",
-      "required": false
     }
   ],
   "dependencies": {
