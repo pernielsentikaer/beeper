@@ -19,7 +19,14 @@
       "description": "Bring Beeper Desktop to the foreground",
       "mode": "no-view"
     }
-  ],
+  ,
+    {
+      "name": "find-chat",
+      "title": "Find Chat",
+      "description": "Find chats from Beeper Desktop",
+      "mode": "view"
+    }
+      ],
   "preferences": [
     {
       "name": "baseUrl",
