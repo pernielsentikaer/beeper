@@ -11,8 +11,8 @@ function ListAccountsCommand() {
     revalidate,
   } = useBeeperDesktop<BeeperDesktop.Account[]>(async (client) => {
     const result = await client.accounts.list();
-    console.log(result);
-    return result as any; // Workaround for API type bug
+    // If the SDK typing is off, prefer a narrow cast over `any`
+    return result as BeeperDesktop.Account[];
   });
 
   return (
