@@ -42,11 +42,10 @@ function ListAccountsCommand() {
             />
           }
           accessories={
-          accessories={
             !isShowingDetail
               ? [
-                  ...(account.user?.email ? [{ text: account.user.email }] as const : []),
-                  ...(account.user?.isSelf ? [{ icon: Icon.Star }] as const : []),
+                  ...(account.user?.email ? ([{ text: account.user.email }] as const) : []),
+                  ...(account.user?.isSelf ? ([{ icon: Icon.Star }] as const) : []),
                 ]
               : []
           }
