@@ -1,19 +1,18 @@
 import { ActionPanel, Detail, List, Action, Icon, Keyboard, Color } from "@raycast/api";
 import { useCachedState, withAccessToken } from "@raycast/utils";
-import { BeeperDesktop } from "@beeper/desktop-api";
+import type { BeeperDesktop } from "@beeper/desktop-api";
 import { useBeeperDesktop, createBeeperOAuth, focusApp } from "./api";
 
 function ListAccountsCommand() {
-  const [isShowingDetail, setIsShowingDetail] = useCachedState("isShowingDetail", false);
+  const [isShowingDetail, setIsShowingDetail] = useCachedState<boolean>("list-accounts:isShowingDetail", false);
   const {
     data: accounts,
     isLoading,
     revalidate,
     error,
-  } = useBeeperDesktop(async (client) => {
+  } = useBeeperDesktop<BeeperDesktop.Account[]>(async (client) => {
     const result = await client.accounts.list();
-    // If the SDK typing is off, prefer a narrow cast over `any`
-    return result as BeeperDesktop.Account[];
+    return result;
   });
 
   return (
@@ -30,7 +29,7 @@ function ListAccountsCommand() {
                 metadata={
                   <List.Item.Detail.Metadata>
                     <List.Item.Detail.Metadata.Label title="Account ID" text={account.accountID} />
-                    <List.Item.Detail.Metadata.Label title="Network" text={account.network} />
+                    <List.Item.Detail.Metadata.Label title="Network" text={account.network || "N/A"} />
                     <List.Item.Detail.Metadata.Separator />
                     <List.Item.Detail.Metadata.Label title="User ID" text={account.user?.id || "N/A"} />
                     <List.Item.Detail.Metadata.Label title="Username" text={account.user?.username || "N/A"} />
