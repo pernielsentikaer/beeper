@@ -9,14 +9,15 @@ function ListAccountsCommand() {
     data: accounts,
     isLoading,
     revalidate,
-  } = useBeeperDesktop<BeeperDesktop.Account[]>(async (client) => {
+    error,
+  } = useBeeperDesktop(async (client) => {
     const result = await client.accounts.list();
     // If the SDK typing is off, prefer a narrow cast over `any`
     return result as BeeperDesktop.Account[];
   });
 
   return (
-    <List isLoading={isLoading} navigationTitle="Beeper Accounts" isShowingDetail={isShowingDetail}>
+    <List isLoading={isLoading} searchBarPlaceholder="Search accounts…" isShowingDetail={isShowingDetail}>
       {accounts?.map((account) => (
         <List.Item
           key={account.accountID}
@@ -24,28 +25,32 @@ function ListAccountsCommand() {
           title={account.user?.fullName || account.user?.username || "Unnamed Account"}
           subtitle={!isShowingDetail ? account.network : undefined}
           detail={
-            <List.Item.Detail
-              metadata={
-                <List.Item.Detail.Metadata>
-                  <List.Item.Detail.Metadata.Label title="Account ID" text={account.accountID} />
-                  <List.Item.Detail.Metadata.Label title="Network" text={account.network} />
-                  <List.Item.Detail.Metadata.Separator />
-                  <List.Item.Detail.Metadata.Label title="User ID" text={account.user?.id || "N/A"} />
-                  <List.Item.Detail.Metadata.Label title="Username" text={account.user?.username || "N/A"} />
-                  <List.Item.Detail.Metadata.Label title="Email" text={account.user?.email || "N/A"} />
-                  <List.Item.Detail.Metadata.Label title="Phone Number" text={account.user?.phoneNumber || "N/A"} />
-                  <List.Item.Detail.Metadata.TagList title="Status">
-                    {account.user?.isSelf && <List.Item.Detail.Metadata.TagList.Item text="Self" color={Color.Green} />}
-                  </List.Item.Detail.Metadata.TagList>
-                </List.Item.Detail.Metadata>
-              }
-            />
+            isShowingDetail ? (
+              <List.Item.Detail
+                metadata={
+                  <List.Item.Detail.Metadata>
+                    <List.Item.Detail.Metadata.Label title="Account ID" text={account.accountID} />
+                    <List.Item.Detail.Metadata.Label title="Network" text={account.network} />
+                    <List.Item.Detail.Metadata.Separator />
+                    <List.Item.Detail.Metadata.Label title="User ID" text={account.user?.id || "N/A"} />
+                    <List.Item.Detail.Metadata.Label title="Username" text={account.user?.username || "N/A"} />
+                    <List.Item.Detail.Metadata.Label title="Email" text={account.user?.email || "N/A"} />
+                    <List.Item.Detail.Metadata.Label title="Phone Number" text={account.user?.phoneNumber || "N/A"} />
+                    {account.user?.isSelf && (
+                      <List.Item.Detail.Metadata.TagList title="Status">
+                        <List.Item.Detail.Metadata.TagList.Item text="Self" color={Color.Green} />
+                      </List.Item.Detail.Metadata.TagList>
+                    )}
+                  </List.Item.Detail.Metadata>
+                }
+              />
+            ) : undefined
           }
           accessories={
             !isShowingDetail
               ? [
                   ...(account.user?.email ? ([{ text: account.user.email }] as const) : []),
-                  ...(account.user?.isSelf ? ([{ icon: Icon.Star }] as const) : []),
+                  ...(account.user?.isSelf ? ([{ icon: Icon.Star, tooltip: "This is you" }] as const) : []),
                 ]
               : []
           }
@@ -58,7 +63,7 @@ function ListAccountsCommand() {
                 onAction={() => focusApp()}
               />
               <Action
-                title="Show Details"
+                title="Toggle Details"
                 shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
                 icon={Icon.AppWindowSidebarLeft}
                 onAction={() => setIsShowingDetail(!isShowingDetail)}
@@ -89,11 +94,15 @@ function ListAccountsCommand() {
           }
         />
       ))}
-      {!isLoading && accounts?.length === 0 && (
+      {!isLoading && (accounts?.length ?? 0) === 0 && (
         <List.EmptyView
-          icon={Icon.Person}
-          title="No Accounts Found"
-          description="Make sure Beeper Desktop is running and you're authenticated"
+          icon={error ? Icon.Warning : Icon.Person}
+          title={error ? "Failed to Load Accounts" : "No Accounts Found"}
+          description={
+            error
+              ? "Could not load accounts. Make sure Beeper Desktop is running and the API is enabled, then try Refresh."
+              : "Make sure Beeper Desktop is running and you're authenticated"
+          }
         />
       )}
     </List>
